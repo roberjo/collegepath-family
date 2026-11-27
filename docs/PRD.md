@@ -65,23 +65,23 @@ Do not create real user accounts, send invitations, or seed real student details
 
 ### MVP — required
 
-| Area | Requirements |
-|---|---|
-| Authentication | Secure sign-in/sign-out, session handling, password reset, invitation/acceptance flow |
-| Family workspace | Family profile, member list, roles, invitation management |
-| Student profiles | Create/edit profiles; graduation year, school, GPA (optional), intended major, notes |
-| Colleges | Add/edit/archive colleges; location, website, admissions URL, estimated annual cost, notes |
-| College interests | Associate colleges with students; track interest level and notes |
-| Applications | Track application type, status, deadline, submitted date, decision date, portal URL, notes |
+| Area                     | Requirements                                                                                                                   |
+| ------------------------ | ------------------------------------------------------------------------------------------------------------------------------ |
+| Authentication           | Secure sign-in/sign-out, session handling, password reset, invitation/acceptance flow                                          |
+| Family workspace         | Family profile, member list, roles, invitation management                                                                      |
+| Student profiles         | Create/edit profiles; graduation year, school, GPA (optional), intended major, notes                                           |
+| Colleges                 | Add/edit/archive colleges; location, website, admissions URL, estimated annual cost, notes                                     |
+| College interests        | Associate colleges with students; track interest level and notes                                                               |
+| Applications             | Track application type, status, deadline, submitted date, decision date, portal URL, notes                                     |
 | Application requirements | Track essays, recommendations, transcripts, test scores, forms, and other checklist items with due dates and completion status |
-| Scholarships | Maintain a family opportunity list with sponsor, amount, eligibility, dates, source, and application URL |
-| Scholarship applications | Track each student's separate status for a scholarship; record submitted date, decision, and awarded amount |
-| Tasks | Assign tasks to a family member and/or student; category, due date, priority, status, description |
-| Awards | Record confirmed scholarships and other college aid separately from unconfirmed opportunities |
-| Dashboard | Family overview, student workspaces, upcoming deadlines, application/scholarship activity, confirmed award summary |
-| Responsive UI | Usable layouts for phone, tablet, and desktop |
-| Security | Supabase Row Level Security (RLS), family-scoped data access, safe environment-variable handling |
-| Documentation | Local setup, Supabase setup, environment variables, deployment, and basic administration |
+| Scholarships             | Maintain a family opportunity list with sponsor, amount, eligibility, dates, source, and application URL                       |
+| Scholarship applications | Track each student's separate status for a scholarship; record submitted date, decision, and awarded amount                    |
+| Tasks                    | Assign tasks to a family member and/or student; category, due date, priority, status, description                              |
+| Awards                   | Record confirmed scholarships and other college aid separately from unconfirmed opportunities                                  |
+| Dashboard                | Family overview, student workspaces, upcoming deadlines, application/scholarship activity, confirmed award summary             |
+| Responsive UI            | Usable layouts for phone, tablet, and desktop                                                                                  |
+| Security                 | Supabase Row Level Security (RLS), family-scoped data access, safe environment-variable handling                               |
+| Documentation            | Local setup, Supabase setup, environment variables, deployment, and basic administration                                       |
 
 ### Explicitly out of scope for the first MVP
 
@@ -153,19 +153,19 @@ The UI should be mobile-first in behavior even when the desktop layout uses a pe
 
 The initial database migration defines these entities:
 
-| Entity | Purpose |
-|---|---|
-| `families` | Top-level family workspace |
-| `family_members` | Authenticated users, family membership, and role |
-| `students` | Student profiles belonging to a family |
-| `colleges` | Colleges/universities tracked by a family |
-| `college_interests` | Student-to-college relationship and interest level |
-| `applications` | A student's application to a college |
-| `application_requirements` | Individual checklist items for an application |
-| `scholarships` | Scholarship opportunities stored at family level |
-| `scholarship_applications` | A student's individual pursuit of a scholarship |
-| `tasks` | Shared or student-specific work items |
-| `awards` | Confirmed financial awards |
+| Entity                     | Purpose                                            |
+| -------------------------- | -------------------------------------------------- |
+| `families`                 | Top-level family workspace                         |
+| `family_members`           | Authenticated users, family membership, and role   |
+| `students`                 | Student profiles belonging to a family             |
+| `colleges`                 | Colleges/universities tracked by a family          |
+| `college_interests`        | Student-to-college relationship and interest level |
+| `applications`             | A student's application to a college               |
+| `application_requirements` | Individual checklist items for an application      |
+| `scholarships`             | Scholarship opportunities stored at family level   |
+| `scholarship_applications` | A student's individual pursuit of a scholarship    |
+| `tasks`                    | Shared or student-specific work items              |
+| `awards`                   | Confirmed financial awards                         |
 
 ### Important modeling decisions
 
@@ -186,17 +186,17 @@ Collect only what the product needs to manage planning. Do not store Social Secu
 
 ### Selected stack
 
-| Layer | Technology | Responsibility |
-|---|---|---|
-| Web application | Next.js App Router | Routing, server/client rendering, application UI |
-| Language | TypeScript | Type safety |
-| Styling | Tailwind CSS | Responsive design system and layout |
-| Icons | Lucide React | Consistent interface icons |
-| Authentication | Supabase Auth | Individual accounts, sessions, invitations |
-| Database | Supabase PostgreSQL | Relational application data |
-| Authorization | PostgreSQL RLS | Enforce family and role access |
-| Hosting | Vercel | Web deployment and preview deployments |
-| Source control | GitHub | Version control, review, and project history |
+| Layer           | Technology          | Responsibility                                   |
+| --------------- | ------------------- | ------------------------------------------------ |
+| Web application | Next.js App Router  | Routing, server/client rendering, application UI |
+| Language        | TypeScript          | Type safety                                      |
+| Styling         | Tailwind CSS        | Responsive design system and layout              |
+| Icons           | Lucide React        | Consistent interface icons                       |
+| Authentication  | Supabase Auth       | Individual accounts, sessions, invitations       |
+| Database        | Supabase PostgreSQL | Relational application data                      |
+| Authorization   | PostgreSQL RLS      | Enforce family and role access                   |
+| Hosting         | Vercel              | Web deployment and preview deployments           |
+| Source control  | GitHub              | Version control, review, and project history     |
 
 ### Architecture principles
 
@@ -254,20 +254,21 @@ Use separate Supabase projects for development and production if the project gro
 
 Phases are ordered by dependency. Each phase should end with a working, reviewable increment.
 
-### Phase 0 — Product foundation (in progress)
+### Phase 0 — Product foundation (complete)
 
 **Goal:** Establish the codebase, visual direction, core data model, and development workflow.
 
 Deliverables:
+
 - [x] GitHub repository and working feature branch.
 - [x] Next.js/TypeScript/Tailwind project scaffold.
 - [x] Responsive dashboard preview using illustrative data.
 - [x] Supabase client helper foundation.
 - [x] Initial relational schema and RLS policy draft.
 - [x] Project setup and security notes in README.
-- [ ] Review and merge the foundation pull request.
-- [ ] Run a clean install, lint, typecheck, and production build; resolve any issues.
-- [ ] Review migration constraints and RLS policies before applying to a real database.
+- [x] Review and merge the foundation pull request.
+- [x] Run a clean install, lint, typecheck, and production build; resolve any issues (proxy moved to `src/proxy.ts`; Prettier, Vitest, and CI added).
+- [x] Review migration constraints and RLS policies before applying to a real database (`0002_schema_review_fixes.sql`, ADR 0003).
 
 **Exit criteria:** The project builds successfully from a clean checkout, the schema is reviewed, and the dashboard shell is ready for integration.
 
@@ -276,6 +277,7 @@ Deliverables:
 **Goal:** Turn the static preview into a private, authenticated family application.
 
 Deliverables:
+
 - Create Supabase project and configure environment variables.
 - Apply reviewed SQL migrations.
 - Implement sign-in, sign-out, password reset, and session refresh.
@@ -292,6 +294,7 @@ Deliverables:
 **Goal:** Make the core college research workflow data-backed.
 
 Deliverables:
+
 - Student profile create, read, update, and archive/deactivate behavior.
 - College directory create, read, update, and archive behavior.
 - Associate colleges with one or both students.
@@ -305,6 +308,7 @@ Deliverables:
 **Goal:** Track the complete application checklist for each student and college.
 
 Deliverables:
+
 - Application create/edit and status tracking.
 - Application deadlines, submitted dates, decision dates, and portal links.
 - Requirement checklist with due dates and completion state.
@@ -318,6 +322,7 @@ Deliverables:
 **Goal:** Coordinate scholarship work and family follow-through.
 
 Deliverables:
+
 - Scholarship opportunity directory.
 - Separate scholarship application per student and opportunity.
 - Scholarship status, deadlines, award decisions, and awarded amount.
@@ -332,6 +337,7 @@ Deliverables:
 **Goal:** Make the product dependable for routine family use.
 
 Deliverables:
+
 - Replace all illustrative dashboard figures with live database queries.
 - Upcoming and overdue deadlines with useful sorting and filtering.
 - Student-specific and family-wide dashboard views.
@@ -349,6 +355,7 @@ Deliverables:
 Prioritize only after the core MVP is stable and being used.
 
 Candidate work:
+
 - Collegiate golf recruiting workspace.
 - Scholarship discovery and eligibility matching.
 - Calendar synchronization and reminders.
