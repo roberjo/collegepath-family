@@ -67,4 +67,5 @@ docs/                  PRD, setup guide, architecture decision records
 
 - [Product requirements and phased plan](docs/PRD.md)
 - [Setup guide](docs/SETUP.md)
+- [Operations guide](docs/OPERATIONS.md) — deploy, administer, back up, recover
 - [Architecture decision records](docs/adr/README.md)

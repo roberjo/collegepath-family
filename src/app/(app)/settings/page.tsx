@@ -8,7 +8,7 @@ import {
   SelectField,
   TextField,
 } from "@/components/forms";
-import { Badge, Card, DescriptionList, PageHeader } from "@/components/ui";
+import { Badge, buttonClass, Card, DescriptionList, PageHeader } from "@/components/ui";
 import { requireFamily } from "@/lib/auth";
 import { formatDate } from "@/lib/dates";
 import { ROLE_LABEL, ROLE_OPTIONS, timeZoneOptions } from "@/lib/options";
@@ -175,6 +175,38 @@ export default async function SettingsPage() {
           })}
         </ul>
       </Card>
+
+      {ctx.isParent && (
+        <Card
+          title="Export data"
+          description="Download a copy of everything in the workspace for safekeeping or spreadsheets. See docs/OPERATIONS.md for backup guidance."
+        >
+          <div className="flex flex-wrap gap-2">
+            <a href="/export/all.json" className={buttonClass("secondary", "sm")} download>
+              Everything (JSON)
+            </a>
+            {[
+              ["students", "Students"],
+              ["colleges", "Colleges"],
+              ["applications", "Applications"],
+              ["application_requirements", "Requirements"],
+              ["scholarships", "Scholarships"],
+              ["scholarship_applications", "Scholarship tracking"],
+              ["tasks", "Tasks"],
+              ["awards", "Awards"],
+            ].map(([table, label]) => (
+              <a
+                key={table}
+                href={`/export/${table}.csv`}
+                className={buttonClass("ghost", "sm")}
+                download
+              >
+                {label} (CSV)
+              </a>
+            ))}
+          </div>
+        </Card>
+      )}
 
       {ctx.isParent && (
         <Card
