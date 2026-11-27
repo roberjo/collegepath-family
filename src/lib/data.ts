@@ -82,3 +82,44 @@ export const CLOSED_APPLICATION_STATUSES = [
   "rejected",
   "withdrawn",
 ];
+
+export type ScholarshipApplicationRow = import("./types").ScholarshipApplication & {
+  scholarship: {
+    id: string;
+    name: string;
+    deadline: string | null;
+    award_amount: number | null;
+  } | null;
+  student: { id: string; display_name: string } | null;
+};
+
+export const getScholarshipApplications = cache(
+  async (familyId: string): Promise<ScholarshipApplicationRow[]> => {
+    const supabase = await createClient();
+    const { data, error } = await supabase
+      .from("scholarship_applications")
+      .select(
+        "*, scholarship:scholarships(id, name, deadline, award_amount), student:students(id, display_name)",
+      )
+      .eq("family_id", familyId);
+    if (error) throw error;
+    return (data ?? []) as ScholarshipApplicationRow[];
+  },
+);
+
+/** Scholarship statuses that still need work before a decision. */
+export const OPEN_OPPORTUNITY_STATUSES = ["saved", "researching", "in_progress"];
+
+export const getTasks = cache(async (familyId: string): Promise<import("./types").Task[]> => {
+  const supabase = await createClient();
+  const { data, error } = await supabase
+    .from("tasks")
+    .select("*")
+    .eq("family_id", familyId)
+    .order("due_date", { ascending: true, nullsFirst: false })
+    .order("created_at", { ascending: true });
+  if (error) throw error;
+  return (data ?? []) as import("./types").Task[];
+});
+
+export const PRIORITY_RANK: Record<string, number> = { urgent: 0, high: 1, normal: 2, low: 3 };

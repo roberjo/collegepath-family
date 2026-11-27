@@ -4,6 +4,7 @@ import Link from "next/link";
 import { notFound } from "next/navigation";
 import { ApplicationList } from "@/components/application-list";
 import { ConfirmAction, InlineAction } from "@/components/forms";
+import { TaskList } from "@/components/task-list";
 import { StatusBadge } from "@/components/status-badge";
 import {
   Badge,
@@ -15,9 +16,14 @@ import {
   PageHeader,
 } from "@/components/ui";
 import { requireFamily } from "@/lib/auth";
-import { getApplications } from "@/lib/data";
+import {
+  getActiveMembers,
+  getApplications,
+  getScholarshipApplications,
+  getTasks,
+} from "@/lib/data";
 import { todayInZone } from "@/lib/dates";
-import { INTEREST_LEVELS } from "@/lib/options";
+import { INTEREST_LEVELS, OPPORTUNITY_STATUSES } from "@/lib/options";
 import { createClient } from "@/lib/supabase/server";
 import type { College, CollegeInterest, Student } from "@/lib/types";
 import { deleteStudent, setStudentArchived } from "../actions";
@@ -42,6 +48,17 @@ export default async function StudentPage({ params }: { params: Promise<{ id: st
     getApplications(ctx.family.id),
   ]);
   const applications = allApplications.filter((a) => a.student_id === id);
+  const [tracking, allTasks, members, { data: awardData }] = await Promise.all([
+    getScholarshipApplications(ctx.family.id),
+    getTasks(ctx.family.id),
+    getActiveMembers(ctx.family.id),
+    supabase.from("awards").select("amount").eq("student_id", id),
+  ]);
+  const scholarships = tracking.filter((t) => t.student_id === id);
+  const tasks = allTasks.filter(
+    (t) => t.student_id === id && (t.status === "todo" || t.status === "in_progress"),
+  );
+  const confirmedTotal = (awardData ?? []).reduce((sum, a) => sum + Number(a.amount), 0);
   if (!studentData) notFound();
   const student = studentData as Student;
   const interests = (interestData ?? []) as InterestRow[];
@@ -145,6 +162,59 @@ export default async function StudentPage({ params }: { params: Promise<{ id: st
       >
         <ApplicationList applications={applications} today={today} show="college" />
       </Card>
+
+      <div className="grid gap-6 xl:grid-cols-2">
+        <Card
+          title="Scholarships"
+          description={`Confirmed awards: ${money(confirmedTotal)}`}
+          action={
+            <LinkButton href={`/scholarships?student=${id}`} variant="ghost" size="sm">
+              View all
+            </LinkButton>
+          }
+        >
+          {scholarships.length === 0 ? (
+            <p className="text-sm text-slate-500">Not tracking any scholarships yet.</p>
+          ) : (
+            <ul className="divide-y divide-slate-100">
+              {scholarships.map((t) => (
+                <li key={t.id} className="flex flex-wrap items-center justify-between gap-2 py-3">
+                  <Link
+                    href={`/scholarships/${t.scholarship_id}`}
+                    className="text-sm font-medium text-slate-800 hover:text-teal"
+                  >
+                    {t.scholarship?.name}
+                  </Link>
+                  <StatusBadge options={OPPORTUNITY_STATUSES} value={t.status} />
+                </li>
+              ))}
+            </ul>
+          )}
+        </Card>
+
+        <Card
+          title="Open tasks"
+          action={
+            <LinkButton
+              href={`/tasks/new?student=${id}&return_to=/students/${id}`}
+              variant="ghost"
+              size="sm"
+            >
+              New task
+            </LinkButton>
+          }
+        >
+          <TaskList
+            tasks={tasks}
+            today={today}
+            names={{
+              students: new Map([[id, student.display_name]]),
+              members: new Map(members.map((m) => [m.user_id, m.display_name])),
+            }}
+            emptyText="No open tasks for this student."
+          />
+        </Card>
+      </div>
 
       {ctx.isParent && (
         <Card title="Manage profile">

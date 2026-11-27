@@ -20,7 +20,7 @@ form-heavy CRUD used by four people.
   field-level errors, preserved input on failure, pending states, and two-step confirmation for
   destructive actions (no browser `confirm()` dialogs).
 - **Routing:** `(auth)` group for sign-in pages, `(app)` group for the authenticated shell,
-  `/onboarding` and `/invite/[token]` stand alone. `src/lib/nav.ts` lists implemented sections.
+  `/onboarding` and `/invite/[token]` stand alone. Navigation lives in `src/components/app-shell.tsx`.
 - **Types:** row interfaces in `src/lib/types.ts` mirror the migrations. Once a Supabase project is
   linked, `supabase gen types typescript` can replace them.
 - **Current family:** a user may belong to several families in the data model; the MVP uses the

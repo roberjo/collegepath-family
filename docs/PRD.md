@@ -317,18 +317,18 @@ Deliverables:
 
 **Exit criteria:** A family can manage multiple applications and their individual requirements without relying on the sample dashboard data.
 
-### Phase 4 — Scholarships, tasks, and awards
+### Phase 4 — Scholarships, tasks, and awards (complete)
 
 **Goal:** Coordinate scholarship work and family follow-through.
 
 Deliverables:
 
-- Scholarship opportunity directory.
-- Separate scholarship application per student and opportunity.
-- Scholarship status, deadlines, award decisions, and awarded amount.
-- Task creation, assignment, priority, status, and due date.
-- Relationships between tasks, applications, and scholarship applications.
-- Confirmed award tracking and dashboard totals.
+- [x] Scholarship opportunity directory with search, deadline, status, and student filters; archive/restore.
+- [x] Separate scholarship application per student and opportunity, with a pipeline summary.
+- [x] Scholarship status, submission/decision dates, and awarded amount per student.
+- [x] Task creation, assignment to any active member, priority, status, due date, and one-tap completion; grouped by overdue / next 7 days / later.
+- [x] Tasks linked to applications and scholarship applications (same-student rule enforced in the database, `0005_scholarships_tasks_awards.sql`).
+- [x] Confirmed award tracking (parents record; students see their own) kept apart from pending opportunities (ADR 0008).
 
 **Exit criteria:** The family can track opportunities through submission and decision, assign work, and distinguish pending amounts from confirmed awards.
 
