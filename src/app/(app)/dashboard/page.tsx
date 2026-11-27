@@ -19,27 +19,34 @@ export default async function DashboardPage({
   const tz = ctx.family.time_zone;
   const today = todayInZone(tz);
 
-  const [{ count: memberCount }, { count: inviteCount }] = await Promise.all([
+  const countOf = (table: string) =>
+    supabase
+      .from(table)
+      .select("id", { count: "exact", head: true })
+      .eq("family_id", ctx.family.id)
+      .then((r) => r.count ?? 0);
+
+  const [memberCount, inviteCount, studentCount, collegeCount] = await Promise.all([
     supabase
       .from("family_members")
       .select("id", { count: "exact", head: true })
       .eq("family_id", ctx.family.id)
-      .eq("status", "active"),
-    ctx.isParent
-      ? supabase
-          .from("family_invitations")
-          .select("id", { count: "exact", head: true })
-          .eq("family_id", ctx.family.id)
-      : Promise.resolve({ count: 0 }),
+      .eq("status", "active")
+      .then((r) => r.count ?? 0),
+    ctx.isParent ? countOf("family_invitations") : Promise.resolve(0),
+    countOf("students"),
+    countOf("colleges"),
   ]);
 
   const steps = [
     { done: true, label: "Create the family workspace" },
+    { done: studentCount > 0, label: "Add a profile for each student", href: "/students/new" },
     {
-      done: (memberCount ?? 0) > 1 || (inviteCount ?? 0) > 0,
+      done: memberCount > 1 || inviteCount > 0,
       label: "Invite the other parent and the students",
       href: "/settings",
     },
+    { done: collegeCount > 0, label: "Start the college list", href: "/colleges/new" },
   ];
 
   return (
@@ -56,7 +63,7 @@ export default async function DashboardPage({
         <Notice tone="amber">That page is only available to parent administrators.</Notice>
       )}
 
-      {ctx.isParent && (
+      {ctx.isParent && steps.some((s) => !s.done) && (
         <Card title="Getting started" description="A few steps to set up your workspace.">
           <ol className="space-y-3">
             {steps.map((step) => (
