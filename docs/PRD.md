@@ -1,6 +1,6 @@
 # CollegePath Family — Product Requirements Document
 
-**Status:** MVP foundation in progress  
+**Status:** MVP in development (see phase status in §9)  
 **Document version:** 0.1  
 **Last updated:** 2026-11-27  
 **Repository:** `roberjo/collegepath-family`  
@@ -272,20 +272,20 @@ Deliverables:
 
 **Exit criteria:** The project builds successfully from a clean checkout, the schema is reviewed, and the dashboard shell is ready for integration.
 
-### Phase 1 — Supabase setup, authentication, and family onboarding
+### Phase 1 — Supabase setup, authentication, and family onboarding (complete)
 
 **Goal:** Turn the static preview into a private, authenticated family application.
 
 Deliverables:
 
-- Create Supabase project and configure environment variables.
-- Apply reviewed SQL migrations.
-- Implement sign-in, sign-out, password reset, and session refresh.
-- Implement family creation and first parent administrator.
-- Implement secure invitation and acceptance for the second parent and two students.
-- Implement member management and role-aware navigation.
-- Add protected routes and server-side authorization checks.
-- Add safe onboarding and empty states.
+- [x] Supabase configuration documented (`docs/SETUP.md`); local stack via `supabase/config.jsonc`. Creating the hosted project is a manual owner step.
+- [x] Reviewed SQL migrations apply cleanly (`0003_roles_and_invitations.sql`).
+- [x] Sign-in, sign-up with email confirmation, sign-out, password reset, and session refresh.
+- [x] Family creation with the first parent administrator.
+- [x] Secure single-use invitation links and acceptance (ADR 0005).
+- [x] Member management (role, student link, remove/restore) and role-aware navigation (ADR 0004).
+- [x] Protected routes (proxy redirect) plus server-side checks and RLS.
+- [x] Onboarding screen, setup screen for unconfigured environments, and empty states.
 
 **Exit criteria:** Each intended family member can sign in individually; unauthorized users cannot access the family workspace; family membership and roles are enforced by the database.
 
