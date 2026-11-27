@@ -103,7 +103,7 @@ export interface Application {
   application_type: string;
   status: ApplicationStatus;
   application_deadline: string | null;
-  submitted_at: string | null;
+  submitted_on: string | null;
   decision_date: string | null;
   portal_url: string | null;
   notes: string | null;
@@ -147,7 +147,7 @@ export interface ScholarshipApplication {
   scholarship_id: string;
   student_id: string;
   status: OpportunityStatus;
-  submitted_at: string | null;
+  submitted_on: string | null;
   decision_date: string | null;
   awarded_amount: number | null;
   notes: string | null;

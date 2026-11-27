@@ -53,3 +53,32 @@ export const getActiveMembers = cache(async (familyId: string): Promise<FamilyMe
 export function defaultStudentId(ctx: FamilyContext, students: { value: string }[]) {
   return ctx.studentId ?? (students.length === 1 ? students[0].value : undefined);
 }
+
+export type ApplicationRow = import("./types").Application & {
+  college: { id: string; name: string } | null;
+  student: { id: string; display_name: string } | null;
+  requirements: { id: string; is_complete: boolean; due_date: string | null }[];
+};
+
+export const getApplications = cache(async (familyId: string): Promise<ApplicationRow[]> => {
+  const supabase = await createClient();
+  const { data, error } = await supabase
+    .from("applications")
+    .select(
+      "*, college:colleges(id, name), student:students(id, display_name), requirements:application_requirements(id, is_complete, due_date)",
+    )
+    .eq("family_id", familyId)
+    .order("application_deadline", { ascending: true, nullsFirst: false });
+  if (error) throw error;
+  return (data ?? []) as ApplicationRow[];
+});
+
+/** Statuses after which an application no longer needs work. */
+export const CLOSED_APPLICATION_STATUSES = [
+  "submitted",
+  "accepted",
+  "waitlisted",
+  "deferred",
+  "rejected",
+  "withdrawn",
+];

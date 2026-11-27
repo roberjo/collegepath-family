@@ -303,17 +303,17 @@ Deliverables:
 
 **Exit criteria:** Parents and students can maintain real student profiles and college shortlists, with family isolation and role permissions verified.
 
-### Phase 3 — Applications and requirements
+### Phase 3 — Applications and requirements (complete)
 
 **Goal:** Track the complete application checklist for each student and college.
 
 Deliverables:
 
-- Application create/edit and status tracking.
-- Application deadlines, submitted dates, decision dates, and portal links.
-- Requirement checklist with due dates and completion state.
-- Filters by student, status, and deadline.
-- Dashboard summaries based on real application data.
+- [x] Application create/edit, quick status updates (submission date stamped automatically), parent-only delete.
+- [x] Application deadlines, submitted dates, decision dates, and portal links (`0004_application_tracking.sql` stores submission as a date).
+- [x] Requirement checklist with types, due dates, one-tap completion, and progress.
+- [x] Filters by student, status, and deadline window (in progress, past deadline, next 30 days).
+- [x] Application summaries on student and college pages (dashboard summaries land in Phase 5).
 
 **Exit criteria:** A family can manage multiple applications and their individual requirements without relying on the sample dashboard data.
 
