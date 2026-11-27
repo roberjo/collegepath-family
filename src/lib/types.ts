@@ -166,6 +166,7 @@ export interface Task {
   priority: TaskPriority;
   assigned_to: string | null;
   created_by: string | null;
+  completed_at: string | null;
   related_application_id: string | null;
   related_scholarship_application_id: string | null;
   created_at: string;

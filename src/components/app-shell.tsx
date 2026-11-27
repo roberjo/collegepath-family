@@ -41,14 +41,11 @@ export function AppShell({
   familyName,
   memberName,
   roleLabel,
-  enabledRoutes,
   children,
 }: {
   familyName: string;
   memberName: string;
   roleLabel: string;
-  /** Routes implemented so far; others are hidden from navigation. */
-  enabledRoutes: string[];
   children: ReactNode;
 }) {
   const pathname = usePathname();
@@ -56,7 +53,6 @@ export function AppShell({
 
   const isActive = (href: string) => pathname === href || pathname.startsWith(`${href}/`);
   const current = [...WORKSPACE_NAV, ...FAMILY_NAV].find((item) => isActive(item.href));
-  const visible = (items: NavItem[]) => items.filter((i) => enabledRoutes.includes(i.href));
 
   const navLink = ({ href, label, icon: Icon }: NavItem) => (
     <Link
@@ -113,12 +109,12 @@ export function AppShell({
         <div className="mt-10 text-[10px] font-semibold tracking-[.16em] text-blue-100/60 uppercase">
           Workspace
         </div>
-        <nav className="mt-3 space-y-1">{visible(WORKSPACE_NAV).map(navLink)}</nav>
+        <nav className="mt-3 space-y-1">{WORKSPACE_NAV.map(navLink)}</nav>
 
         <div className="mt-9 text-[10px] font-semibold tracking-[.16em] text-blue-100/60 uppercase">
           Family
         </div>
-        <nav className="mt-3 space-y-1">{visible(FAMILY_NAV).map(navLink)}</nav>
+        <nav className="mt-3 space-y-1">{FAMILY_NAV.map(navLink)}</nav>
 
         <div className="mt-auto flex items-center gap-3 border-t border-white/10 pt-4">
           <div
