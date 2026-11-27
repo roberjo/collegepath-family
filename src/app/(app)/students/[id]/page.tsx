@@ -2,6 +2,7 @@ import { GraduationCap, Pencil } from "lucide-react";
 import type { Metadata } from "next";
 import Link from "next/link";
 import { notFound } from "next/navigation";
+import { ApplicationList } from "@/components/application-list";
 import { ConfirmAction, InlineAction } from "@/components/forms";
 import { StatusBadge } from "@/components/status-badge";
 import {
@@ -14,6 +15,8 @@ import {
   PageHeader,
 } from "@/components/ui";
 import { requireFamily } from "@/lib/auth";
+import { getApplications } from "@/lib/data";
+import { todayInZone } from "@/lib/dates";
 import { INTEREST_LEVELS } from "@/lib/options";
 import { createClient } from "@/lib/supabase/server";
 import type { College, CollegeInterest, Student } from "@/lib/types";
@@ -29,13 +32,16 @@ export default async function StudentPage({ params }: { params: Promise<{ id: st
   const { id } = await params;
   const ctx = await requireFamily();
   const supabase = await createClient();
-  const [{ data: studentData }, { data: interestData }] = await Promise.all([
+  const today = todayInZone(ctx.family.time_zone);
+  const [{ data: studentData }, { data: interestData }, allApplications] = await Promise.all([
     supabase.from("students").select("*").eq("id", id).eq("family_id", ctx.family.id).maybeSingle(),
     supabase
       .from("college_interests")
       .select("*, college:colleges(id, name, location, estimated_annual_cost)")
       .eq("student_id", id),
+    getApplications(ctx.family.id),
   ]);
+  const applications = allApplications.filter((a) => a.student_id === id);
   if (!studentData) notFound();
   const student = studentData as Student;
   const interests = (interestData ?? []) as InterestRow[];
@@ -127,6 +133,17 @@ export default async function StudentPage({ params }: { params: Promise<{ id: st
             ))}
           </ul>
         )}
+      </Card>
+
+      <Card
+        title="Applications"
+        action={
+          <LinkButton href={`/applications/new?student=${id}`} variant="ghost" size="sm">
+            New application
+          </LinkButton>
+        }
+      >
+        <ApplicationList applications={applications} today={today} show="college" />
       </Card>
 
       {ctx.isParent && (

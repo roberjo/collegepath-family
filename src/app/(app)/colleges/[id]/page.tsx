@@ -10,6 +10,7 @@ import {
   SelectField,
   TextAreaField,
 } from "@/components/forms";
+import { ApplicationList } from "@/components/application-list";
 import { StatusBadge } from "@/components/status-badge";
 import {
   Badge,
@@ -21,7 +22,8 @@ import {
   PageHeader,
 } from "@/components/ui";
 import { requireFamily } from "@/lib/auth";
-import { defaultStudentId, getStudentOptions } from "@/lib/data";
+import { defaultStudentId, getApplications, getStudentOptions } from "@/lib/data";
+import { todayInZone } from "@/lib/dates";
 import { INTEREST_LEVELS } from "@/lib/options";
 import { createClient } from "@/lib/supabase/server";
 import type { College, CollegeInterest } from "@/lib/types";
@@ -33,11 +35,20 @@ export default async function CollegePage({ params }: { params: Promise<{ id: st
   const { id } = await params;
   const ctx = await requireFamily();
   const supabase = await createClient();
-  const [{ data: collegeData }, { data: interestData }, studentOptions] = await Promise.all([
-    supabase.from("colleges").select("*").eq("id", id).eq("family_id", ctx.family.id).maybeSingle(),
-    supabase.from("college_interests").select("*").eq("college_id", id),
-    getStudentOptions(ctx),
-  ]);
+  const today = todayInZone(ctx.family.time_zone);
+  const [{ data: collegeData }, { data: interestData }, studentOptions, allApplications] =
+    await Promise.all([
+      supabase
+        .from("colleges")
+        .select("*")
+        .eq("id", id)
+        .eq("family_id", ctx.family.id)
+        .maybeSingle(),
+      supabase.from("college_interests").select("*").eq("college_id", id),
+      getStudentOptions(ctx),
+      getApplications(ctx.family.id),
+    ]);
+  const applications = allApplications.filter((a) => a.college_id === id);
   if (!collegeData) notFound();
   const college = collegeData as College;
   const interests = (interestData ?? []) as CollegeInterest[];
@@ -133,6 +144,17 @@ export default async function CollegePage({ params }: { params: Promise<{ id: st
         ) : (
           <p className="text-sm text-slate-500">Add a student profile to track interest.</p>
         )}
+      </Card>
+
+      <Card
+        title="Applications"
+        action={
+          <LinkButton href={`/applications/new?college=${id}`} variant="ghost" size="sm">
+            Start an application
+          </LinkButton>
+        }
+      >
+        <ApplicationList applications={applications} today={today} show="student" />
       </Card>
 
       <Card title="Manage college">
