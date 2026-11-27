@@ -1,6 +1,6 @@
 # CollegePath Family — Product Requirements Document
 
-**Status:** MVP in development (see phase status in §9)  
+**Status:** MVP feature-complete; awaiting production deployment (see §9)  
 **Document version:** 0.1  
 **Last updated:** 2026-11-27  
 **Repository:** `roberjo/collegepath-family`  
@@ -332,27 +332,27 @@ Deliverables:
 
 **Exit criteria:** The family can track opportunities through submission and decision, assign work, and distinguish pending amounts from confirmed awards.
 
-### Phase 5 — Dashboard, quality, privacy, and production launch
+### Phase 5 — Dashboard, quality, privacy, and production launch (complete in code; launch is an owner step)
 
 **Goal:** Make the product dependable for routine family use.
 
 Deliverables:
 
-- Replace all illustrative dashboard figures with live database queries.
-- Upcoming and overdue deadlines with useful sorting and filtering.
-- Student-specific and family-wide dashboard views.
-- Responsive and accessibility review.
-- RLS and role-permission test suite, including cross-family isolation tests.
-- Input validation, error handling, and audit-friendly timestamps.
-- Production Vercel deployment and domain decision.
-- Backup/export and recovery procedures.
-- Production smoke test on desktop and mobile.
+- [x] All dashboard figures come from live queries (no illustrative data remains).
+- [x] Unified upcoming and overdue deadlines across applications, requirements, scholarships, and tasks; filterable task and application views.
+- [x] Student-specific (parents can focus on one student; students always see their own) and family-wide dashboard views.
+- [x] Responsive layouts and accessibility basics: labelled fields, skip link, focus outlines, text labels for urgency, aria on progress and toggles. Phone-width layouts were not checked in a real browser.
+- [x] RLS and role-permission test suite with cross-family isolation for every table (`supabase/tests/02`–`06`), run in CI.
+- [x] Server-side Zod validation, friendly errors, error/not-found/loading screens, `updated_at`/`completed_at` timestamps.
+- [ ] Production Vercel deployment and domain decision — documented in `docs/OPERATIONS.md` (ADR 0009: start on `*.vercel.app`); requires the owner's Vercel and Supabase accounts.
+- [x] Backup/export (JSON + CSV export for parents, `supabase db dump`) and recovery procedures (`docs/OPERATIONS.md`).
+- [ ] Production smoke test on desktop and mobile — checklist in `docs/OPERATIONS.md`, to run after deployment.
 
 **Exit criteria:** The family can use the app with real planning data; access controls have been tested; production configuration and recovery expectations are documented.
 
 ### Phase 6 — Optional enhancements
 
-Prioritize only after the core MVP is stable and being used.
+Optional and not started. Prioritize only after the core MVP is stable and being used in production.
 
 Candidate work:
 
