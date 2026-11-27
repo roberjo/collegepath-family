@@ -1,0 +1,65 @@
+name: Production check
+
+# Read-only checks against production every 6 hours. Opens (or updates) an
+# issue labelled production-alert when they fail and closes it on recovery.
+on:
+  schedule:
+    - cron: "23 */6 * * *"
+  workflow_dispatch:
+
+permissions:
+  contents: read
+  issues: write
+
+concurrency:
+  group: production-check
+  cancel-in-progress: true
+
+jobs:
+  check:
+    name: Smoke-test production
+    if: vars.PRODUCTION_URL != ''
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+          cache: npm
+      - run: npm ci
+      - name: Run checks
+        env:
+          BASE_URL: ${{ vars.PRODUCTION_URL }}
+          SUPABASE_URL: ${{ vars.SUPABASE_URL }}
+          SUPABASE_PUBLISHABLE_KEY: ${{ vars.SUPABASE_PUBLISHABLE_KEY }}
+          SMOKE_EMAIL: ${{ secrets.SMOKE_EMAIL }}
+          SMOKE_PASSWORD: ${{ secrets.SMOKE_PASSWORD }}
+          VERSION_WAIT_SECONDS: "60"
+        run: node scripts/smoke-production.mjs
+
+      - name: Open or update alert issue
+        if: failure()
+        env:
+          GH_TOKEN: ${{ github.token }}
+          RUN_URL: ${{ github.server_url }}/${{ github.repository }}/actions/runs/${{ github.run_id }}
+        run: |
+          gh label create production-alert --color B60205 \
+            --description "Automated production check failed" 2>/dev/null || true
+          open=$(gh issue list --label production-alert --state open --json number -q '.[0].number')
+          if [ -n "$open" ]; then
+            gh issue comment "$open" --body "Still failing: $RUN_URL"
+          else
+            gh issue create --label production-alert --title "Production check failing" \
+              --body "The scheduled production check failed. Details (no family data is logged): $RUN_URL"
+          fi
+
+      - name: Close alert issue on recovery
+        if: success()
+        env:
+          GH_TOKEN: ${{ github.token }}
+          RUN_URL: ${{ github.server_url }}/${{ github.repository }}/actions/runs/${{ github.run_id }}
+        run: |
+          for n in $(gh issue list --label production-alert --state open --json number -q '.[].number'); do
+            gh issue close "$n" --comment "Production checks passing again: $RUN_URL"
+          done

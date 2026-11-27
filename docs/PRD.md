@@ -344,9 +344,9 @@ Deliverables:
 - [x] Responsive layouts and accessibility basics: labelled fields, skip link, focus outlines, text labels for urgency, aria on progress and toggles. Phone-width layouts were not checked in a real browser.
 - [x] RLS and role-permission test suite with cross-family isolation for every table (`supabase/tests/02`–`06`), run in CI.
 - [x] Server-side Zod validation, friendly errors, error/not-found/loading screens, `updated_at`/`completed_at` timestamps.
-- [ ] Production Vercel deployment and domain decision — documented in `docs/OPERATIONS.md` (ADR 0009: start on `*.vercel.app`); requires the owner's Vercel and Supabase accounts.
+- [ ] Production Vercel deployment and domain decision. The pipeline is automated (ADR 0010: CI → migrations → staged deploy → checks → promote) and the domain starts on `*.vercel.app` (ADR 0009). Turning it on needs the owner's Vercel and Supabase accounts plus the one-time setup in `docs/OPERATIONS.md`.
 - [x] Backup/export (JSON + CSV export for parents, `supabase db dump`) and recovery procedures (`docs/OPERATIONS.md`).
-- [ ] Production smoke test on desktop and mobile — checklist in `docs/OPERATIONS.md`, to run after deployment.
+- [ ] Production smoke test on desktop and mobile. Automated read-only checks run on every deploy and every 6 hours (`scripts/smoke-production.mjs`). The manual phone and desktop checklist in `docs/OPERATIONS.md` runs once after the first deployment.
 
 **Exit criteria:** The family can use the app with real planning data; access controls have been tested; production configuration and recovery expectations are documented.
 

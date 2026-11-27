@@ -8,6 +8,8 @@ describe("routes", () => {
     expect(isPublicPath("/auth/callback")).toBe(true);
     expect(isPublicPath("/dashboard")).toBe(false);
     expect(isPublicPath("/loginx")).toBe(false);
+    expect(isPublicPath("/api/health")).toBe(true);
+    expect(isPublicPath("/export/all.json")).toBe(false);
     expect(isAuthEntryPath("/signup")).toBe(true);
     expect(isAuthEntryPath("/invite/abc")).toBe(false);
   });

@@ -1,12 +1,13 @@
 name: CI
 
+# Pull requests run here directly. Pushes to main run this workflow through
+# deploy.yml, so production is only deployed after these checks pass.
 on:
   pull_request:
-  push:
-    branches: [main]
+  workflow_call:
 
 concurrency:
-  group: ci-${{ github.ref }}
+  group: ci-${{ github.workflow }}-${{ github.ref }}
   cancel-in-progress: true
 
 permissions:
@@ -46,3 +47,30 @@ jobs:
       - run: bash scripts/test-db.sh
         env:
           DATABASE_URL: postgresql://postgres:postgres@localhost:5432/postgres
+
+  migrations:
+    name: Migrations are append-only
+    if: github.event_name == 'pull_request'
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+      - name: Existing migrations unchanged; new ones sort last
+        env:
+          BASE_REF: origin/${{ github.base_ref }}
+        run: |
+          changed=$(git diff --name-status --no-renames "$BASE_REF...HEAD" -- supabase/migrations | grep -v '^A' || true)
+          if [ -n "$changed" ]; then
+            echo "::error::Applied migrations must not be edited or deleted; add a new migration instead."
+            echo "$changed"
+            exit 1
+          fi
+          latest=$(git ls-tree --name-only "$BASE_REF" supabase/migrations/ | sort | tail -1)
+          for f in $(git diff --name-only --diff-filter=A "$BASE_REF...HEAD" -- supabase/migrations); do
+            if [[ "$f" < "$latest" || "$f" == "$latest" ]]; then
+              echo "::error file=$f::New migration must sort after $latest"
+              exit 1
+            fi
+          done
+          echo "Migrations OK"

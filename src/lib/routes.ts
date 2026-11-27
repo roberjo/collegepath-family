@@ -1,5 +1,5 @@
 /** Routes reachable without a session. Everything else requires sign-in. */
-const PUBLIC_PAGES = ["/login", "/signup", "/forgot-password"];
+const PUBLIC_PAGES = ["/login", "/signup", "/forgot-password", "/api/health"];
 const PUBLIC_PREFIXES = ["/auth/", "/invite/"];
 
 export function isPublicPath(pathname: string): boolean {

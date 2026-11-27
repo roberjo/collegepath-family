@@ -15,3 +15,4 @@ A record is never rewritten after it is accepted; a later ADR supersedes it inst
 | [0007](0007-application-architecture.md)          | Application architecture — Server Components and Server Actions | Accepted |
 | [0008](0008-confirmed-awards-vs-opportunities.md) | Confirmed awards are separate from scholarship outcomes         | Accepted |
 | [0009](0009-hosting-backups-and-recovery.md)      | Hosting, backups, and recovery                                  | Accepted |
+| [0010](0010-automated-deployment-pipeline.md)     | Automated deployment pipeline                                   | Accepted |
