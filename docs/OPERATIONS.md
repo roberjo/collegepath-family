@@ -4,36 +4,98 @@ Deploying, administering, backing up, and recovering CollegePath Family. See
 [SETUP.md](SETUP.md) for first-time local and Supabase setup and
 [ADR 0009](adr/0009-hosting-backups-and-recovery.md) for the reasoning behind these choices.
 
-## Deploy to Vercel (production)
+## Deploy to production
 
-1. Create the **production** Supabase project and apply every migration (SETUP.md §2b). Keep a
-   separate local or development project for experiments — never test against real family data.
-2. In Vercel: **Add New → Project → Import** `roberjo/collegepath-family`. The framework preset
-   (Next.js) and default build settings are correct.
-3. **Environment variables** (Production and Preview):
+Deployment is automated by GitHub Actions ([ADR 0010](adr/0010-automated-deployment-pipeline.md)).
+Every merge to `main` runs `.github/workflows/deploy.yml`:
 
-   | Name                                   | Value                                                         |
-   | -------------------------------------- | ------------------------------------------------------------- |
-   | `NEXT_PUBLIC_SUPABASE_URL`             | Supabase Project URL                                          |
-   | `NEXT_PUBLIC_SUPABASE_PUBLISHABLE_KEY` | Supabase publishable key                                      |
-   | `NEXT_PUBLIC_SITE_URL`                 | Production only: e.g. `https://collegepath-family.vercel.app` |
+1. CI (format, lint, typecheck, unit tests, build, migration + RLS tests).
+2. `supabase db push` applies new migrations to the production database.
+3. `vercel build` + `vercel deploy --prod --skip-domain` creates the deployment **without** moving
+   the production domain.
+4. `scripts/smoke-production.mjs` verifies that staged deployment. If it fails, production is
+   untouched.
+5. `vercel promote` switches the domain, then the checks run again against the production URL.
 
-   Leave `NEXT_PUBLIC_SITE_URL` unset for Preview so links use the preview URL. Never add a Supabase
-   secret/service-role key.
+`.github/workflows/production-check.yml` repeats the read-only checks every 6 hours and opens a
+`production-alert` issue on failure (closed automatically on recovery). Run either workflow by hand
+from the **Actions** tab (**Run workflow**).
 
-4. **Production branch:** `main`. Every pull request gets a preview deployment.
-5. **Supabase → Auth → URL Configuration:** Site URL = production URL; Redirect URLs include
-   `https://<production-host>/**` (and optionally your preview URL pattern).
-6. Optional: **Vercel → Settings → Deployment Protection** can require Vercel login for previews.
-7. Run the production smoke test below.
+Until the `PRODUCTION_URL` variable exists, both workflows skip their production jobs, so merges
+still run CI only.
+
+> **The repository is public, so workflow logs are public.** The check script prints only check
+> names, status codes, and counts. Never add steps that print query results or upload database
+> dumps as artifacts.
+
+### One-time setup
+
+1. **Supabase:** create the production project (SETUP.md §2b). Migrations are applied by the
+   workflow, so you do not need to run them by hand. Note the project ref, the database password,
+   the Project URL, and the publishable key. Create a personal access token under
+   **Account → Access Tokens**.
+2. **Vercel:** **Add New → Project → Import** `roberjo/collegepath-family` (Next.js defaults are
+   correct). `vercel.json` turns off Git deployments of `main`, so production deploys only come
+   from the workflow; pull-request previews still deploy.
+   - **Environment variables → Production:** `NEXT_PUBLIC_SUPABASE_URL`,
+     `NEXT_PUBLIC_SUPABASE_PUBLISHABLE_KEY`, and `NEXT_PUBLIC_SITE_URL` (for example
+     `https://collegepath-family.vercel.app`). Never add a Supabase secret/service-role key.
+   - **Preview:** do not point previews at the production database, because previews may contain
+     migrations that have not run there. Either leave Preview variables unset (previews show the
+     setup page) or use a second free Supabase project.
+   - Create a token (**Account Settings → Tokens**). Find the org and project IDs under
+     **Project → Settings → General**, or run `npx vercel link` and read `.vercel/project.json`.
+   - **Settings → Deployment Protection:** keep protection on and create a **Protection Bypass for
+     Automation** secret so the workflow can test the staged deployment.
+3. **Supabase → Auth → URL Configuration:** Site URL = production URL; Redirect URLs include
+   `https://<production-host>/**`.
+4. **Smoke-test account (recommended):** sign up on production with a dedicated address (for
+   example a `+smoke` alias), confirm it, and create its own family named "Smoke test". Don't add
+   any real data to it. The checks only read data.
+5. **GitHub → Settings → Secrets and variables → Actions:**
+
+   | Kind     | Name                              | Value                                             |
+   | -------- | --------------------------------- | ------------------------------------------------- |
+   | Secret   | `VERCEL_TOKEN`                    | Vercel token                                      |
+   | Secret   | `VERCEL_ORG_ID`                   | Vercel team/org ID                                |
+   | Secret   | `VERCEL_PROJECT_ID`               | Vercel project ID                                 |
+   | Secret   | `VERCEL_AUTOMATION_BYPASS_SECRET` | Protection bypass secret                          |
+   | Secret   | `SUPABASE_ACCESS_TOKEN`           | Supabase personal access token                    |
+   | Secret   | `SUPABASE_DB_PASSWORD`            | Production database password                      |
+   | Secret   | `SMOKE_EMAIL` / `SMOKE_PASSWORD`  | Smoke-test account (optional)                     |
+   | Variable | `SUPABASE_PROJECT_REF`            | Project ref (from the dashboard URL)              |
+   | Variable | `SUPABASE_URL`                    | Supabase Project URL                              |
+   | Variable | `SUPABASE_PUBLISHABLE_KEY`        | Publishable key (public by design)                |
+   | Variable | `PRODUCTION_URL`                  | Production URL; **set last**, it turns on deploys |
+
+6. Optional: **Settings → Environments → production** can require a reviewer to approve each
+   deploy, and **Settings → Branches** can require the CI checks before merging.
+7. **Actions → Deploy → Run workflow** for the first deployment, then run the manual checklist
+   below once.
+
+You can run the checks locally against any deployment:
+
+```bash
+BASE_URL=https://<host> SUPABASE_URL=... SUPABASE_PUBLISHABLE_KEY=... npm run smoke:production
+```
 
 **Domain:** start on the free `*.vercel.app` URL. A custom domain is optional (annual cost); if
-added, update `NEXT_PUBLIC_SITE_URL` and the Supabase Site URL / Redirect URLs.
+added, update `NEXT_PUBLIC_SITE_URL`, the `PRODUCTION_URL` variable, and the Supabase URLs.
 
-## Production smoke test
+### Rollback
 
-Run after the first deployment and after any release that changes auth, permissions, or
-migrations. Use a phone and a desktop browser.
+- **App:** Vercel → Deployments → previous production deployment → **Instant Rollback**, or run
+  `npx vercel rollback`.
+- **Database:** migrations are not rolled back automatically. Write a new forward migration. A
+  migration must keep working with the code that is already deployed, because it runs before the
+  new code is promoted. For example, add a column in one release and remove the old one in a later
+  release.
+
+## Manual production checklist
+
+The automated checks cover health, headers, redirects, anonymous access, and signed-in reads. Run
+this manual list after the first deployment and after releases that change sign-up, invitations,
+or roles. Use a phone and a desktop browser.
 
 - [ ] Signed-out visit to `/dashboard` redirects to sign-in.
 - [ ] Create an account → confirmation email arrives → link lands on onboarding.
@@ -86,8 +148,7 @@ last one.
 
 ## Releasing changes
 
-1. Branch from `main`, open a pull request, and wait for CI (lint, typecheck, unit tests, build,
-   migration + RLS tests).
-2. New migrations: apply to production with `npx supabase@3.4.0 db push` **before or together
-   with** merging code that depends on them. Migrations are append-only.
-3. Merge (squash). Vercel deploys `main` automatically.
+1. Branch from `main`, open a pull request, and wait for CI. CI also checks that applied
+   migrations were not edited and that new ones sort last.
+2. Squash-merge. The Deploy workflow migrates, deploys, verifies, and promotes automatically.
+   Watch it in the **Actions** tab. If it fails before promotion, production is unchanged.

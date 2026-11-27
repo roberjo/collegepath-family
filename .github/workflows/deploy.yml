@@ -1,0 +1,119 @@
+name: Deploy
+
+# Every push to main: run CI, apply database migrations, build and deploy to
+# Vercel WITHOUT moving the production domain, verify that deployment, then
+# promote it and verify production. Nothing runs until PRODUCTION_URL is set
+# (see docs/OPERATIONS.md → Automated deployment).
+on:
+  push:
+    branches: [main]
+  workflow_dispatch:
+
+concurrency:
+  group: production-deploy
+  cancel-in-progress: false
+
+permissions:
+  contents: read
+
+env:
+  VERCEL_CLI: vercel@65.14.0
+  SUPABASE_CLI: supabase@3.4.0
+
+jobs:
+  ci:
+    uses: ./.github/workflows/ci.yml
+
+  deploy:
+    name: Migrate, deploy, verify, promote
+    needs: ci
+    if: vars.PRODUCTION_URL != ''
+    runs-on: ubuntu-latest
+    timeout-minutes: 30
+    environment:
+      name: production
+      url: ${{ vars.PRODUCTION_URL }}
+    env:
+      VERCEL_TOKEN: ${{ secrets.VERCEL_TOKEN }}
+      VERCEL_ORG_ID: ${{ secrets.VERCEL_ORG_ID }}
+      VERCEL_PROJECT_ID: ${{ secrets.VERCEL_PROJECT_ID }}
+      SUPABASE_ACCESS_TOKEN: ${{ secrets.SUPABASE_ACCESS_TOKEN }}
+      SUPABASE_DB_PASSWORD: ${{ secrets.SUPABASE_DB_PASSWORD }}
+      SUPABASE_PROJECT_REF: ${{ vars.SUPABASE_PROJECT_REF }}
+      # Read by scripts/smoke-production.mjs
+      SUPABASE_URL: ${{ vars.SUPABASE_URL }}
+      SUPABASE_PUBLISHABLE_KEY: ${{ vars.SUPABASE_PUBLISHABLE_KEY }}
+      VERCEL_AUTOMATION_BYPASS_SECRET: ${{ secrets.VERCEL_AUTOMATION_BYPASS_SECRET }}
+      SMOKE_EMAIL: ${{ secrets.SMOKE_EMAIL }}
+      SMOKE_PASSWORD: ${{ secrets.SMOKE_PASSWORD }}
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+          cache: npm
+      - run: npm ci
+
+      - name: Check configuration
+        run: |
+          missing=()
+          for name in VERCEL_TOKEN VERCEL_ORG_ID VERCEL_PROJECT_ID SUPABASE_ACCESS_TOKEN \
+            SUPABASE_DB_PASSWORD SUPABASE_PROJECT_REF SUPABASE_URL SUPABASE_PUBLISHABLE_KEY; do
+            [ -n "${!name}" ] || missing+=("$name")
+          done
+          if [ ${#missing[@]} -gt 0 ]; then
+            echo "::error::Missing secrets/variables: ${missing[*]} (see docs/OPERATIONS.md)"
+            exit 1
+          fi
+
+      - name: Pending database migrations
+        run: npx --yes "$SUPABASE_CLI" db push --remote="$SUPABASE_PROJECT_REF" --password "$SUPABASE_DB_PASSWORD" --dry-run
+
+      # Migrations run before the new code goes live, so they must stay
+      # compatible with the currently deployed code (add, then remove later).
+      - name: Apply database migrations
+        run: npx --yes "$SUPABASE_CLI" db push --remote="$SUPABASE_PROJECT_REF" --password "$SUPABASE_DB_PASSWORD" --yes
+
+      - name: Build
+        env:
+          NEXT_PUBLIC_APP_VERSION: ${{ github.sha }}
+        run: |
+          npx --yes "$VERCEL_CLI" pull --yes --environment=production --token="$VERCEL_TOKEN"
+          npx --yes "$VERCEL_CLI" build --prod --token="$VERCEL_TOKEN"
+
+      - name: Deploy without assigning the production domain
+        id: stage
+        run: |
+          url=$(npx --yes "$VERCEL_CLI" deploy --prebuilt --prod --skip-domain --token="$VERCEL_TOKEN")
+          echo "url=$url" >> "$GITHUB_OUTPUT"
+          echo "Staged deployment: $url"
+
+      - name: Verify the staged deployment
+        env:
+          BASE_URL: ${{ steps.stage.outputs.url }}
+          EXPECTED_VERSION: ${{ github.sha }}
+        run: node scripts/smoke-production.mjs
+
+      - name: Promote to production
+        env:
+          STAGED_URL: ${{ steps.stage.outputs.url }}
+        run: npx --yes "$VERCEL_CLI" promote "$STAGED_URL" --yes --token="$VERCEL_TOKEN"
+
+      - name: Verify production
+        env:
+          BASE_URL: ${{ vars.PRODUCTION_URL }}
+          EXPECTED_VERSION: ${{ github.sha }}
+        run: node scripts/smoke-production.mjs
+
+      - name: Summary
+        if: always()
+        env:
+          STAGED_URL: ${{ steps.stage.outputs.url }}
+          OUTCOME: ${{ job.status }}
+        run: |
+          {
+            echo "### Production deploy: $OUTCOME"
+            echo "- Commit: \`$GITHUB_SHA\`"
+            echo "- Staged deployment: ${STAGED_URL:-not created}"
+            echo "- If verification failed before promotion, production is unchanged."
+          } >> "$GITHUB_STEP_SUMMARY"
