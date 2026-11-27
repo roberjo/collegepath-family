@@ -289,17 +289,17 @@ Deliverables:
 
 **Exit criteria:** Each intended family member can sign in individually; unauthorized users cannot access the family workspace; family membership and roles are enforced by the database.
 
-### Phase 2 — Student profiles and college planning
+### Phase 2 — Student profiles and college planning (complete)
 
 **Goal:** Make the core college research workflow data-backed.
 
 Deliverables:
 
-- Student profile create, read, update, and archive/deactivate behavior.
-- College directory create, read, update, and archive behavior.
-- Associate colleges with one or both students.
-- Interest levels, notes, useful URLs, and estimated cost.
-- Student-specific planning views and filters.
+- [x] Student profile create, read, update, archive/restore, and parent-only delete.
+- [x] College directory create, read, update, archive/restore, and parent-only delete.
+- [x] Associate colleges with one or both students (students adding a college get it on their own list automatically).
+- [x] Interest levels, notes, useful URLs, and estimated cost.
+- [x] Student detail view with their college list; college filters by student, interest level, and search (kept in the URL).
 
 **Exit criteria:** Parents and students can maintain real student profiles and college shortlists, with family isolation and role permissions verified.
 
